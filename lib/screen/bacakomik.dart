@@ -127,7 +127,6 @@ class _BacaKomikState extends State<BacaKomik> {
           : SingleChildScrollView(
               child: Column(
                 children: [
-                  // Comic Details Container
                   Container(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -211,7 +210,7 @@ class _BacaKomikState extends State<BacaKomik> {
                     ),
                   ),
 
-                  // Comic Pages (Images)
+
                   Container(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -232,14 +231,14 @@ class _BacaKomikState extends State<BacaKomik> {
                     ),
                   ),
 
-                  // Comments and Rating Section
+
                   Container(
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 16),
-                        // Rating section
+
                         Text(
                           "Rating (Max 5)",
                           style: const TextStyle(

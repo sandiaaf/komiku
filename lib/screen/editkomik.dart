@@ -70,15 +70,14 @@ class _EditKomikState extends State<EditKomik> {
         _controllerDate.text = comic?.tanggal_rilis ?? '';
         _controllerPengarang.text = comic?.pengarang ?? '';
         _controllerThumbnail.text = comic?.thumbnail ?? '';
-        _selectedKategori =
-            (comic?.kategori ?? []).map((e) => e['id'] as int).toList();
-        _isLoading = false; // Data selesai dimuat
+        _selectedKategori =(comic?.kategori ?? []).map((e) => e['id'] as int).toList();
+        _isLoading = false;
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Gagal mengambil data komik')));
       setState(() {
-        _isLoading = false; // Tetap set _isLoading meskipun gagal
+        _isLoading = false;
       });
     }
   }
@@ -296,7 +295,7 @@ class _EditKomikState extends State<EditKomik> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator()) // Tampilkan loading
+              child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Form(
