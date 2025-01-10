@@ -51,7 +51,7 @@ class _HomeState extends State<Home> {
     }
   }
 
-  void fetchComics() async {
+  Future<void> fetchComics() async {
     setState(() {
       _isLoading = true;
     });

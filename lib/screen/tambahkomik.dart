@@ -59,6 +59,10 @@ class _TambahKomikState extends State<TambahKomik> {
   }
 
   Future<void> submit() async {
+    String base64Image = "";
+    if(_imageBytes != null){
+      base64Image = base64Encode(_imageBytes!);
+    }
     final response = await http.post(
       Uri.parse("https://ubaya.xyz/flutter/160421110/uas/newkomik.php"),
       body: {
@@ -68,27 +72,18 @@ class _TambahKomikState extends State<TambahKomik> {
         'pengarang': _pengarang,
         'user_id': _userId,
         'thumbnail': _thumbnail,
+        'base64Image' : base64Image,
+        'category_ids' : jsonEncode(_selectedKategori)
       },
     );
     if (response.statusCode == 200) {
       Map json = jsonDecode(response.body);
       if (json['result'] == 'success') {
-        int idKomik = json['id_komik'];
-        for (var idKategori in _selectedKategori) {
-          await http.post(
-            Uri.parse(
-                'https://ubaya.xyz/flutter/160421110/uas/tambahkomikkategori.php'),
-            body: {
-              'id_komik': idKomik.toString(),
-              'id_kategori': idKategori.toString()
-            },
-          );
-        }
-
-        if (!mounted) return;
+        
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Sukses Menambah Komik')));
         Navigator.pop(context);
+
       }
     } else {
       ScaffoldMessenger.of(context)
