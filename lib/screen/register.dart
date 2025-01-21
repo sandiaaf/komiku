@@ -1,67 +1,87 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:http/http.dart' as http;
-import '../main.dart';
-import 'package:komiku/screen/register.dart';
 
-
-class MyLogin extends StatelessWidget {
-  const MyLogin({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Komiku',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const Login(),
-    );
-  }
-}
-
-class Login extends StatefulWidget {
-  const Login({super.key});
+class Register extends StatefulWidget {
+  const Register({super.key});
 
   @override
   State<StatefulWidget> createState() {
-    return _LoginState();
+    return _RegisterState();
   }
 }
 
-class _LoginState extends State<Login> {
+class _RegisterState extends State<Register> {
   String _user_name = "";
   String _user_password = "";
-  String _error_login = "";
 
-  void doLogin() async {
+  void doRegister() async {
     final response = await http.post(
-        Uri.parse("https://ubaya.xyz/flutter/160421110/uas/login.php"),
+        Uri.parse("https://ubaya.xyz/flutter/160421110/uas/register.php"),
         body: {'user_name': _user_name, 'user_password': _user_password});
 
     if (response.statusCode == 200) {
       Map json = jsonDecode(response.body);
       if (json['result'] == 'success') {
-        final prefs = await SharedPreferences.getInstance();
-        prefs.setString("user_id", json['data']['user_id']);
-        prefs.setString("user_name", json['data']['user_name']);
-        main();
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Success'),
+            content: const Text('Registration successful!'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: const Text('OK'),
+              )
+            ],
+          ),
+        );
       } else {
-        setState(() {
-          _error_login = "Login failed";
-        });
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Error'),
+            content: Text(json['message'] ?? 'Registration failed!'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('OK'),
+              )
+            ],
+          ),
+        );
       }
     } else {
-      throw Exception('Failed to read API');
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Error'),
+          content: const Text('Failed to connect to the server.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('OK'),
+            )
+          ],
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Register'),
+      ),
       body: Center(
         child: SingleChildScrollView(
           child: Container(
@@ -82,7 +102,7 @@ class _LoginState extends State<Login> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Login',
+                  'Register',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -119,17 +139,10 @@ class _LoginState extends State<Login> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
-                if (_error_login.isNotEmpty)
-                  Text(
-                    _error_login,
-                    style: const TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
-                  ),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    doLogin();
+                    doRegister();
                   },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 15),
@@ -138,23 +151,10 @@ class _LoginState extends State<Login> {
                     ),
                   ),
                   child: const Text(
-                    'Login',
+                    'Register',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const Register()),
-                    );
-                  },
-                  child: const Text(
-                    "Don't have an account? Register here",
-                    style: TextStyle(color: Colors.blueAccent),
-                  ),
-                )
               ],
             ),
           ),

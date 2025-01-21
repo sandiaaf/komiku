@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:komiku/class/category.dart';
+import 'package:komiku/screen/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TambahKomik extends StatefulWidget {
@@ -60,7 +61,7 @@ class _TambahKomikState extends State<TambahKomik> {
 
   Future<void> submit() async {
     String base64Image = "";
-    if(_imageBytes != null){
+    if (_imageBytes != null) {
       base64Image = base64Encode(_imageBytes!);
     }
     final response = await http.post(
@@ -72,18 +73,20 @@ class _TambahKomikState extends State<TambahKomik> {
         'pengarang': _pengarang,
         'user_id': _userId,
         'thumbnail': _thumbnail,
-        'base64Image' : base64Image,
-        'category_ids' : jsonEncode(_selectedKategori)
+        'base64Image': base64Image,
+        'category_ids': jsonEncode(_selectedKategori)
       },
     );
     if (response.statusCode == 200) {
       Map json = jsonDecode(response.body);
       if (json['result'] == 'success') {
-        
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Sukses Menambah Komik')));
-        Navigator.pop(context);
-
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/',
+          (Route<dynamic> route) => false,
+        );
       }
     } else {
       ScaffoldMessenger.of(context)

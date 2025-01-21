@@ -5,10 +5,11 @@ class ComicDetail {
   final String thumbnail;
   final String tanggal_rilis;
   final String pengarang;
+  final String? userId;
   final List<Map<String, dynamic>>? rating;
   final List<Map<String, dynamic>>? kategori;
   final List<String>? konten;
-  final List<Map<String, String>>? komentar;
+  final List<Map<String, dynamic>>? komentar;
   String? userRating;
 
   ComicDetail({
@@ -18,6 +19,7 @@ class ComicDetail {
     required this.thumbnail,
     required this.tanggal_rilis,
     required this.pengarang,
+    this.userId,
     this.rating,
     this.kategori,
     this.konten,
@@ -33,6 +35,7 @@ class ComicDetail {
       thumbnail: json['thumbnail'] as String,
       tanggal_rilis: json['tanggal_rilis'] as String,
       pengarang: json['pengarang'] as String,
+      userId: json['user_id'],
       rating: (json['rating'] as List?)
           ?.map((e) => e as Map<String, dynamic>)
           .toList(),
@@ -43,7 +46,12 @@ class ComicDetail {
           ?.map((e) => e as String)
           .toList(),
       komentar: (json['komentar'] as List?)
-          ?.map((e) => Map<String, String>.from(e))
+          ?.map((e) => {
+                'id': e['id'],
+                'nama': e['nama'],
+                'isi': e['isi'],
+                'balasan': e['balasan'] ?? [],
+              })
           .toList(),
       userRating: json['userRating'] as String?,
     );

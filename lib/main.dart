@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:komiku/screen/bacakomik.dart';
 import 'package:komiku/screen/carikomik.dart';
 import 'package:komiku/screen/kategori.dart';
+import 'package:komiku/screen/mykomik.dart';
 import 'package:komiku/screen/tambahkomik.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screen/home.dart';
@@ -58,6 +59,7 @@ class MyApp extends StatelessWidget {
         'carikomik': (context) => const CariKomik(),
         'kategori': (context) => const Kategori(),
         'tambahkomik': (context) => const TambahKomik(),
+        'mykomik': (context) => const MyKomik(),
       },
     );
   }
@@ -85,7 +87,7 @@ class _MyHomePageState extends State<MyHomePage> {
   String _user_name = "";
   int _currentIndex = 0;
   final List<Widget> _screens = [Home(), CariKomik(), Kategori(), TambahKomik()];
-  final List<String> _title = ['Home', 'Cari', 'Kategori', 'Tambah Komik'];
+  final List<String> _title = ['Home', 'Cari', 'Kategori','Komik Saya', 'Tambah Komik'];
 
   void doLogout() async {
     final prefs = await SharedPreferences.getInstance();
@@ -131,6 +133,12 @@ class _MyHomePageState extends State<MyHomePage> {
               leading: const Icon(Icons.category),
               onTap: () {
                 Navigator.pushNamed(context, "kategori");
+              }),
+          ListTile(
+              title: const Text("Komik Saya"),
+              leading: const Icon(Icons.book_rounded),
+              onTap: () {
+                Navigator.pushNamed(context, "mykomik");
               }),
           ListTile(
               title: const Text("Tambah Komik"),

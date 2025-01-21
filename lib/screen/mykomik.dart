@@ -4,26 +4,23 @@ import 'package:http/http.dart' as http;
 import 'package:komiku/class/category.dart';
 import 'package:komiku/class/comic.dart';
 import 'package:komiku/screen/bacakomik.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class Home extends StatefulWidget {
-  const Home({super.key});
+class MyKomik extends StatefulWidget {
+  const MyKomik({super.key});
 
   @override
   State<StatefulWidget> createState() {
-    return _HomeState();
+    return _MyKomikState();
   }
 }
 
-class _HomeState extends State<Home> {
+class _MyKomikState extends State<MyKomik> {
   String _searchQuery = "";
   int _selectedCategory = 0;
   List<Category> _categories = [];
   List<Comic> _comics = [];
   bool _isLoading = true;
-
-  void _refreshHomeData() {
-    fetchComics();
-  }
 
   @override
   void initState() {
@@ -60,11 +57,15 @@ class _HomeState extends State<Home> {
       _isLoading = true;
     });
 
+    final prefs = await SharedPreferences.getInstance();
+    String _user_id = prefs.getString('user_id') ?? '';
+
     final response = await http.post(
-      Uri.parse("https://ubaya.xyz/flutter/160421110/uas/komik.php"),
+      Uri.parse("https://ubaya.xyz/flutter/160421110/uas/mykomik.php"),
       body: {
         'cari': _searchQuery,
         'kategori': _selectedCategory.toString(),
+        'user_id': _user_id,
       },
     );
 
@@ -82,21 +83,18 @@ class _HomeState extends State<Home> {
     }
   }
 
-  void sortComics(String sortBy) {
-    setState(() {
-      if (sortBy == "asc") {
-        _comics.sort((a, b) => a.judul.compareTo(b.judul));
-      } else if (sortBy == "desc") {
-        _comics.sort((a, b) => b.judul.compareTo(a.judul));
-      } else if (sortBy == "rate") {
-        _comics.sort((a, b) => double.parse(b.rating??"").compareTo(double.parse(a.rating??"")));
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text("Komik Saya"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -175,35 +173,16 @@ class _HomeState extends State<Home> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: [
-                      const Text(
-                        "Sort by:",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(width: 10),
-                      ElevatedButton(
-                        onPressed: () => sortComics("asc"),
-                        child: const Text("ASC"),
-                      ),
-                      const SizedBox(width: 10),
-                      ElevatedButton(
-                        onPressed: () => sortComics("desc"),
-                        child: const Text("DESC"),
-                      ),
-                      const SizedBox(width: 10),
-                      ElevatedButton(
-                        onPressed: () => sortComics("rate"),
-                        child: const Text("Rate"),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 10),
                 if (_isLoading)
                   const Center(child: CircularProgressIndicator())
+                else if (_comics.isEmpty)
+                  Center(
+                    child: Text(
+                      "Belum membuat komik",
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  )
                 else
                   GridView.builder(
                     padding: const EdgeInsets.all(20),
@@ -228,8 +207,7 @@ class _HomeState extends State<Home> {
                                   BacaKomik(komikID: comic.id),
                             ),
                           );
-                          // Setelah kembali dari BacaKomik, refresh data komik
-                          fetchComics();
+                          fetchComics(); // Refresh data setelah kembali
                         },
                         child: Container(
                           decoration: BoxDecoration(
@@ -269,20 +247,15 @@ class _HomeState extends State<Home> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(
-                                        Icons.star,
-                                        color: Colors.amber,
-                                        size: 16,
-                                      ),
+                                      const Icon(Icons.star,
+                                          color: Colors.amber, size: 16),
                                       const SizedBox(width: 4),
                                       Text(
                                         comic.rating != "0"
                                             ? "${comic.rating}/5"
                                             : "N/A",
                                         style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                        ),
+                                            color: Colors.white, fontSize: 14),
                                       ),
                                     ],
                                   ),
