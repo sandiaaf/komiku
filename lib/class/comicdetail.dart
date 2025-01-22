@@ -51,6 +51,7 @@ class ComicDetail {
                 'nama': e['nama'],
                 'isi': e['isi'],
                 'balasan': e['balasan'] ?? [],
+                'user_id': e['user_id'],
               })
           .toList(),
       userRating: json['userRating'] as String?,

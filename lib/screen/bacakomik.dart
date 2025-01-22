@@ -104,6 +104,81 @@ class _BacaKomikState extends State<BacaKomik> {
     }
   }
 
+  Future<void> editComment(String comment, int commentId) async {
+    final response = await http.post(
+      Uri.parse("https://ubaya.xyz/flutter/160421110/uas/updatekomentar.php"),
+      body: {
+        'idkomik': widget.komikID.toString(),
+        'user_id': _userId,
+        'komentar': comment,
+        'comment_id': commentId.toString(),
+      },
+    );
+
+    if (response.statusCode == 200) {
+      fetchComicDetails();
+    } else {
+      print("Failed to submit comment.");
+    }
+  }
+
+  void _showEditPopup(String currentComment, int commentId) {
+    if (commentId <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Komentar ID tidak valid.")),
+      );
+      return;
+    }
+
+    TextEditingController _editController =
+        TextEditingController(text: currentComment);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            'Edit Komentar',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: TextField(
+            controller: _editController,
+            decoration: const InputDecoration(
+              labelText: "Edit Komentar",
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 3,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Batal"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (_editController.text.isNotEmpty) {
+                  editComment(_editController.text, commentId);
+                  _editController.clear();
+                  Navigator.pop(context);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Balasan tidak boleh kosong."),
+                    ),
+                  );
+                }
+              },
+              child: const Text("simpan"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _deleteComic() async {
     final response = await http.post(
       Uri.parse("https://ubaya.xyz/flutter/160421110/uas/deletekomik.php"),
@@ -336,9 +411,9 @@ class _BacaKomikState extends State<BacaKomik> {
           "https://ubaya.xyz/flutter/160421110/uas/tambahsubkomentar.php"),
       body: {
         'idkomik': widget.komikID.toString(),
-        'komentar_id': commentId.toString(),
+        'comment_id': commentId.toString(),
         'user_id': _userId,
-        'isi': reply,
+        'komentar': reply,
       },
     );
 
@@ -347,6 +422,78 @@ class _BacaKomikState extends State<BacaKomik> {
     } else {
       print("Failed to submit reply.");
     }
+  }
+
+  Future<void> editReply(int replyId, String reply) async {
+    final response = await http.post(
+      Uri.parse(
+          "https://ubaya.xyz/flutter/160421110/uas/updatesubkomentar.php"),
+      body: {
+        'idkomik': widget.komikID.toString(),
+        'balasan_id': replyId.toString(),
+        'user_id': _userId,
+        'komentar': reply,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      fetchComicDetails();
+    } else {
+      print("Failed to submit reply.");
+    }
+  }
+
+  void _showEditReplyPopup(int replyId, String currentReply) {
+    if (replyId <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Balasan ID tidak valid.")),
+      );
+      return;
+    }
+
+    TextEditingController _editReplyController =
+        TextEditingController(text: currentReply);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            'Edit Balasan',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          content: TextField(
+            controller: _editReplyController,
+            decoration: const InputDecoration(
+              labelText: "Edit Balasan",
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 3,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Batal"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (_editReplyController.text.isNotEmpty) {
+                  editReply(replyId, _editReplyController.text);
+                  _editReplyController.clear();
+                  Navigator.pop(context);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text("Balasan tidak boleh kosong.")),
+                  );
+                }
+              },
+              child: const Text("Simpan"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void fetchComics(int kategoriID) async {
@@ -796,6 +943,8 @@ class _BacaKomikState extends State<BacaKomik> {
                           itemCount: comicDetail.komentar?.length ?? 0,
                           itemBuilder: (context, index) {
                             final comment = comicDetail.komentar![index];
+                            bool isUserComment = comment['user_id'] == _userId;
+
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -806,31 +955,65 @@ class _BacaKomikState extends State<BacaKomik> {
                                 Padding(
                                   padding: const EdgeInsets.only(
                                       left: 4.0, bottom: 16.0),
-                                  child: Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: TextButton(
-                                      onPressed: () {
-                                        _showReplyPopup(comment['id']);
-                                      },
-                                      child: Text("Balas"),
-                                    ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      if (isUserComment)
+                                        TextButton(
+                                          onPressed: () {
+                                            _showEditPopup(
+                                                comment['isi'], comment['id']);
+                                          },
+                                          child: const Text("Edit"),
+                                        ),
+                                      const SizedBox(width: 8),
+                                      TextButton(
+                                        onPressed: () {
+                                          _showReplyPopup(comment['id']);
+                                        },
+                                        child: const Text("Balas"),
+                                      ),
+                                    ],
                                   ),
                                 ),
-
                                 if ((comment['balasan'] as List).isNotEmpty)
                                   Padding(
                                     padding: const EdgeInsets.only(left: 32.0),
                                     child: Column(
                                       children: (comment['balasan'] as List)
                                           .map((reply) {
-                                        return ListTile(
-                                          title: Text(reply['nama'] ?? ""),
-                                          subtitle: Text(reply['isi'] ?? ""),
+                                        bool isUserReply =
+                                            reply['user_id'] == _userId;
+
+                                        return Column(
+                                          children: [
+                                            ListTile(
+                                              title: Text(reply['nama'] ?? ""),
+                                              subtitle:
+                                                  Text(reply['isi'] ?? ""),
+                                            ),
+                                            if (isUserReply)
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 8.0),
+                                                child: Align(
+                                                  alignment: Alignment.centerLeft,
+                                                  child: TextButton(
+                                                    onPressed: () {
+                                                      _showEditReplyPopup(
+                                                          reply['id'],
+                                                          reply['isi']);
+                                                    },
+                                                    child: const Text("Edit"),
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
                                         );
                                       }).toList(),
                                     ),
                                   ),
-                                const Divider(), //garis
+                                const Divider(), // Garis pemisah
                               ],
                             );
                           },
