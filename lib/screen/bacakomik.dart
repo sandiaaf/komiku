@@ -154,6 +154,20 @@ class _BacaKomikState extends State<BacaKomik> {
     }
   }
 
+  Future<void> submitFavorit(int id_komik) async {
+    final response = await http.post(
+      Uri.parse("https://ubaya.xyz/flutter/160421110/uas/tambahfavorit.php"),
+      body: {
+        'komik_id': id_komik.toString(),
+      },
+    );
+
+    if (response.statusCode == 200) {
+    } else {
+      print("Failed to submit favorit.");
+    }
+  }
+
   void _showDeleteConfirmationDialog() {
     showDialog(
       context: context,
@@ -360,7 +374,7 @@ class _BacaKomikState extends State<BacaKomik> {
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: ElevatedButton(
                         onPressed: () async {
-                          fetchComicDetails();
+                          submitFavorit(comicDetail.id);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.pinkAccent,
