@@ -154,17 +154,37 @@ class _BacaKomikState extends State<BacaKomik> {
     }
   }
 
-  Future<void> submitFavorit(int id_komik) async {
+  Future<void> submitFavorit(int komikId) async {
     final response = await http.post(
       Uri.parse("https://ubaya.xyz/flutter/160421110/uas/tambahfavorit.php"),
       body: {
-        'komik_id': id_komik.toString(),
+        'user_id': _userId,
+        'komik_id': komikId.toString(),
       },
     );
 
     if (response.statusCode == 200) {
+      final result = jsonDecode(response.body);
+      if (result['result'] == 'success') {
+        if (result['action'] == 'added') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Komik berhasil ditambahkan ke favorit!')),
+          );
+        } else if (result['action'] == 'removed') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Komik berhasil dihapus dari favorit!')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengubah status favorit: ${result['Error']}')),
+        );
+      }
     } else {
-      print("Failed to submit favorit.");
+      print("Failed to submit favorit. Status code: ${response.statusCode}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal mengubah status favorit.')),
+      );
     }
   }
 
@@ -267,35 +287,34 @@ class _BacaKomikState extends State<BacaKomik> {
   }
 
   void fetchComics(int kategoriID) async {
-  final response = await http.post(
-    Uri.parse("https://ubaya.xyz/flutter/160421110/uas/komik.php"),
-    body: {
-      'cari': '',
-      'kategori': kategoriID.toString(),
-    },
-  );
+    final response = await http.post(
+      Uri.parse("https://ubaya.xyz/flutter/160421110/uas/komik.php"),
+      body: {
+        'cari': '',
+        'kategori': kategoriID.toString(),
+      },
+    );
 
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body)['data'] as List;
-    List<Comic> comics = [];
-    int count = 0;
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body)['data'] as List;
+      List<Comic> comics = [];
+      int count = 0;
 
-    for (var item in data) {
-      comics.add(Comic.fromJson(item));
-      count++;
-      if (count >= 3) break;
+      for (var item in data) {
+        comics.add(Comic.fromJson(item));
+        count++;
+        if (count >= 3) break;
+      }
+
+      setState(() {
+        _comics = comics;
+      });
+    } else {
+      setState(() {
+        _comics = [];
+      });
     }
-
-    setState(() {
-      _comics = comics;
-    });
-  } else {
-    setState(() {
-      _comics = [];
-    });
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -483,7 +502,7 @@ class _BacaKomikState extends State<BacaKomik> {
                           ),
                         ),
                         SizedBox(
-                          height: 230, 
+                          height: 230,
                           child: ListView.builder(
                             padding: const EdgeInsets.all(20),
                             scrollDirection: Axis.horizontal,
@@ -499,7 +518,8 @@ class _BacaKomikState extends State<BacaKomik> {
                                           BacaKomik(komikID: comic.id),
                                     ),
                                   );
-                                  fetchComics(comicDetail.kategori?[0]['kategori']);
+                                  fetchComics(
+                                      comicDetail.kategori?[0]['kategori']);
                                 },
                                 child: Container(
                                   width: 150,
@@ -518,8 +538,8 @@ class _BacaKomikState extends State<BacaKomik> {
                                   child: Stack(
                                     children: [
                                       ClipRRect(
-                                        borderRadius:
-                                            const BorderRadius.all(Radius.circular(15)),
+                                        borderRadius: const BorderRadius.all(
+                                            Radius.circular(15)),
                                         child: AspectRatio(
                                           aspectRatio: 1 / 1,
                                           child: Image.network(
