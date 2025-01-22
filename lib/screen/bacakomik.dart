@@ -25,11 +25,13 @@ class _BacaKomikState extends State<BacaKomik> {
   int userRating = 0;
   String? _userId;
   String? _userName;
+  String buttonFavText = "FAVORIT";
 
   @override
   void initState() {
     super.initState();
     fetchComicDetails();
+    checkFavorit();
   }
 
   Future<void> fetchComicDetails() async {
@@ -170,20 +172,77 @@ class _BacaKomikState extends State<BacaKomik> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Komik berhasil ditambahkan ke favorit!')),
           );
+          setState(() {
+            buttonFavText = "BATAL FAVORIT";
+          });
         } else if (result['action'] == 'removed') {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Komik berhasil dihapus dari favorit!')),
           );
+          setState(() {
+            buttonFavText = "FAVORIT";
+          });
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengubah status favorit: ${result['Error']}')),
+          SnackBar(
+              content:
+                  Text('Gagal mengubah status favorit: ${result['Error']}')),
         );
       }
     } else {
       print("Failed to submit favorit. Status code: ${response.statusCode}");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal mengubah status favorit.')),
+      );
+    }
+  }
+
+  Future<void> checkFavorit() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userId = prefs.getString('user_id') ?? '';
+      _userName = prefs.getString('user_name') ?? '';
+    });
+    if (_userId == '') {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User ID tidak ditemukan.')));
+    }
+
+    final response = await http.post(
+      Uri.parse("https://ubaya.xyz/flutter/160421110/uas/userlistfavorit.php"),
+      body: {
+        'user_id': _userId,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final result = jsonDecode(response.body);
+      if (result['result'] == 'success') {
+        bool isFavorit = false;
+
+        for (var item in result['data']) {
+          if (item['user_id'] == _userId && item['komik_id'] == widget.komikID) {
+            isFavorit = true;
+
+            break;
+          }
+        }
+
+        setState(() {
+          buttonFavText = isFavorit ? "BATAL FAVORIT" : "FAVORIT";
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('Gagal memuat status favorit: ${result['message']}')),
+        );
+      }
+    } else {
+      print("Failed to check favorit. Status code: ${response.statusCode}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memuat status favorit.')),
       );
     }
   }
@@ -410,8 +469,8 @@ class _BacaKomikState extends State<BacaKomik> {
                               size: 14.0,
                             ),
                             const SizedBox(width: 4),
-                            const Text(
-                              "FAVORIT",
+                            Text(
+                              buttonFavText,
                               style: TextStyle(
                                 fontSize: 12.0,
                                 fontWeight: FontWeight.bold,
