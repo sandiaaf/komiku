@@ -27,6 +27,8 @@ class _BacaKomikState extends State<BacaKomik> {
   String? _userName;
   String buttonFavText = "FAVORIT";
 
+  int _selectedChapter = 0;
+
   @override
   void initState() {
     super.initState();
@@ -60,12 +62,13 @@ class _BacaKomikState extends State<BacaKomik> {
             )['rating'] ??
             0;
         _averageRating = _calculateAverageRating(comicDetail.rating);
-        _isLoading = false;
 
         if (comicDetail.kategori != null && comicDetail.kategori!.isNotEmpty) {
           final kategoriID = comicDetail.kategori![0]['id'];
           fetchComics(kategoriID);
         }
+
+        _isLoading = false;
       });
     } else {
       setState(() {
@@ -222,7 +225,8 @@ class _BacaKomikState extends State<BacaKomik> {
         bool isFavorit = false;
 
         for (var item in result['data']) {
-          if (item['user_id'] == _userId && item['komik_id'] == widget.komikID) {
+          if (item['user_id'] == _userId &&
+              item['komik_id'] == widget.komikID) {
             isFavorit = true;
 
             break;
@@ -375,8 +379,28 @@ class _BacaKomikState extends State<BacaKomik> {
     }
   }
 
+  List<List<String>> _splitIntoChapters(List<String> content) {
+    List<List<String>> chapters = [];
+    for (int i = 0; i < content.length; i += 4) {
+      chapters.add(
+          content.sublist(i, i + 4 > content.length ? content.length : i + 4));
+    }
+    return chapters;
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: Text("Loading...")),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+    List<List<String>> chapters = [];
+    if (comicDetail.konten != null && comicDetail.konten!.isNotEmpty) {
+      chapters = _splitIntoChapters(comicDetail.konten!);
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_isLoading ? "Loading..." : comicDetail.judul),
@@ -526,26 +550,78 @@ class _BacaKomikState extends State<BacaKomik> {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 24),
                   Container(
                     padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: comicDetail.konten
-                              ?.map(
-                                (page) => ClipRect(
-                                  child: Align(
-                                    alignment: Alignment.center,
-                                    child: Image.network(
-                                      "https://ubaya.xyz/flutter/160421110/uas/" +
-                                          page,
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                    ),
+                    child: chapters.isNotEmpty
+                        ? Column(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.purple,
+                                    width: 1,
                                   ),
                                 ),
-                              )
-                              .toList() ??
-                          [],
-                    ),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                child: DropdownButton<int>(
+                                  value: _selectedChapter,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _selectedChapter = value!;
+                                    });
+                                  },
+                                  items: List.generate(
+                                    chapters.length,
+                                    (index) => DropdownMenuItem(
+                                      value: index,
+                                      child: Text(
+                                        "Chapter ${index + 1}",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: _selectedChapter == index
+                                              ? Colors.purple
+                                              : Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  underline: const SizedBox(),
+                                  dropdownColor: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  style: const TextStyle(fontSize: 16),
+                                  icon: Icon(
+                                    Icons.arrow_drop_down,
+                                    color: Colors.purple,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  children: chapters[_selectedChapter]
+                                      .map(
+                                        (page) => ClipRect(
+                                          child: Align(
+                                            alignment: Alignment.center,
+                                            child: Image.network(
+                                              "https://ubaya.xyz/flutter/160421110/uas/" +
+                                                  page,
+                                              fit: BoxFit.cover,
+                                              width: double.infinity,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ),
+                            ],
+                          )
+                        : const SizedBox(),
                   ),
                   Container(
                     padding: const EdgeInsets.all(16),
